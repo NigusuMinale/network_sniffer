@@ -1,123 +1,99 @@
 # Basic Network Sniffer
 
-A professional educational network packet analysis application built with Python and a React dashboard.
-
-## Overview
-
-Basic Network Sniffer is designed for cybersecurity students, network engineers, and beginners who want to understand how packets travel on a network. The project captures traffic on an authorized interface, parses packet metadata, identifies common protocols, and presents the information through a clean browser dashboard.
+A Python/React educational packet-analysis dashboard for learning how network traffic and common protocols work. Use it only on networks you own or are authorized to monitor.
 
 ## Features
 
-- Detect and list available network interfaces
-- Start/stop live capture on a selected interface
-- Parse IPv4, IPv6, TCP, UDP, ICMP, and DNS metadata
-- Inspect recent packets in a table-based traffic dashboard
-- Filter captured packets by protocol, address, port, or DNS query
-- Expand packet rows to inspect common header metadata and a short payload hex preview
-- Export captured packet metadata as downloadable CSV or JSON
-- Clear in-memory packet history when capture is stopped
-- A lightweight PCAP/PCAPNG file validation stub (offline parsing is not implemented yet)
+- Discover network interfaces and start or stop a live capture.
+- Parse IPv4, IPv6, TCP, UDP, ICMP, and DNS packet metadata.
+- Search packets by address, port, or DNS query and filter by protocol.
+- Expand packet rows to inspect header metadata and a short payload hex preview.
+- Download captured metadata as CSV or JSON, or clear stopped-session history.
+- Apply an optional BPF capture filter.
 
-## Architecture
+## Technology
 
-- Backend: FastAPI + Scapy + Python
-- Frontend: React + Vite
-- Storage: in-memory live capture records with JSON/CSV API exports
-- Testing: pytest
+- Backend: Python, FastAPI, and Scapy
+- Frontend: React and Vite
+- Tests: pytest
 
-## Installing
+## Requirements
 
-1. Clone the repository
-2. Create a virtual environment and install dependencies
+- Python 3.14 or another version supported by the pinned packages
+- Node.js and npm
+- Appropriate operating-system permissions for packet capture
+
+## Setup
+
+Run these commands from the repository root. Create and activate a virtual environment, then install the Python dependencies:
 
 ```bash
-cd /home/momye/Videos/network-sniffer/network_sniffer
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements.txt
 ```
 
-## Running the backend
+Install frontend dependencies:
 
 ```bash
-cd /home/momye/Videos/network-sniffer/network_sniffer
-. .venv/bin/activate
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-## Running the frontend
-
-```bash
-cd /home/momye/Videos/network-sniffer/network_sniffer/frontend
+cd frontend
 npm install
-npm run dev -- --host 0.0.0.0
 ```
 
-Then open the frontend in the browser at:
+## Run
 
-- http://127.0.0.1:5173
-
-## Testing
+Start the backend from the repository root in one terminal. Running Uvicorn through the virtual-environment Python ensures it uses the project dependencies rather than system packages:
 
 ```bash
-cd /home/momye/Videos/network-sniffer/network_sniffer
-. .venv/bin/activate
-pytest -q
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-## Permissions and legal use
+Start the frontend from the `frontend` directory in another terminal:
 
-This project is intended for authorized network diagnostics and educational use only. Capture traffic only on interfaces you own or are explicitly permitted to monitor. Do not run packet capture on public or shared networks without authorization.
+```bash
+npm run dev
+```
+
+Open http://127.0.0.1:5173. The dashboard expects the API at http://127.0.0.1:8000 by default. To use another API address, set `VITE_API_BASE` before starting Vite.
+
+## Tests and production build
+
+From the repository root, run backend tests:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+Build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
 
 ## Troubleshooting
 
-### Missing dependencies
+### Uvicorn imports the wrong packages
 
-If imports fail, recreate the virtual environment and reinstall:
+Activate `.venv` and run `python -m uvicorn ...`, or use `.venv/bin/python -m uvicorn ...`. Avoid launching the system `uvicorn` executable outside the project environment.
 
-```bash
-rm -rf .venv
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-```
+### Capture permission denied
 
-### Permission denied during capture
+Capture may require elevated privileges or platform-specific packet-capture permissions. Configure permissions for the intended interface; do not broaden permissions unnecessarily.
 
-- Run the application with elevated privileges when required on Linux systems
-- Ensure the interface is valid and permissions allow capture
-- On Kali Linux, the packet capture privileges may require root or group membership such as wireshark
+### No interface appears
 
-### Interface not listed
+Check that the operating system exposes the interface (for example, with `ip link`) and that the backend starts without import errors.
 
-- Confirm the interface exists with `ip link` or `ifconfig`
-- Ensure the OS exposes network interfaces to the user session
+## Limitations
 
-### Browser cannot reach the API
+- Packet history is held in memory and is lost when the backend restarts.
+- Large captures can consume substantial memory.
+- PCAP/PCAPNG import is not implemented; the existing helper only checks file metadata.
+- TLS payloads are not decrypted. The payload preview only shows bytes Scapy exposes as packet payload.
+- Live capture requires authorization and suitable OS permissions.
 
-- Confirm the backend is running on port 8000
-- Check that the frontend is pointing at the correct API URL in [frontend/src/App.jsx](frontend/src/App.jsx)
+## Responsible use
 
-## Current limitations
-
-- Captured packets are kept in memory and are lost when the backend restarts.
-- Packet history is kept in memory and is lost when the backend restarts.
-- The packet table displays captured records from the current backend process; very large sessions may use significant memory.
-- PCAP import currently validates the file extension and reports file metadata; it does not parse packets from the file.
-- Capture requires appropriate OS permissions. Capture errors raised asynchronously by Scapy may not be reported accurately by the API yet.
-
-## Manual testing instructions
-
-1. Select an authorized interface from the dashboard.
-2. Start a short capture session.
-3. Generate a small amount of traffic such as browsing or pinging a local host.
-4. Review the packet listing and protocol summary.
-5. Stop the capture, then optionally export the visible session as CSV or JSON or clear its in-memory history.
-
-## Notes
-
-This is an educational MVP. Persistent history, offline PCAP parsing, and real-time packet graphs remain future improvements. It does not decrypt TLS traffic.
-
-# network_sniffer
-A Python-based network packet sniffer for capturing and analyzing network traffic, identifying protocols, displaying source and destination IP addresses, and inspecting packet headers and payloads for educational network security analysis. Python ,Scapy, Networking ,Cybersecurity ,Packet Analysis, TCP/IP
+This tool is for education and authorized diagnostics. Capture only traffic on networks and interfaces you own or have explicit permission to monitor. Respect privacy, organizational policies, and applicable law.
